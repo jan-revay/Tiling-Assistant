@@ -1,0 +1,41 @@
+(this patch is for the version of tiling assistant present on Ubuntu 24.04)
+
+
+From 1c1cc05e2d49506f823b70201b77e7372f755906 Mon Sep 17 00:00:00 2001
+From: JohnnyRevay <65253638+jan-revay@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 19:46:31 +0200
+Subject: [PATCH] Only consider windows, which are on the monitor we tile on
+
+---
+ tiling-assistant@leleat-on-github/src/extension/layoutsManager.js | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/tiling-assistant@leleat-on-github/src/extension/layoutsManager.js b/tiling-assistant@leleat-on-github/src/extension/layoutsManager.js
+index c74974a..dcd742f 100644
+--- a/tiling-assistant@leleat-on-github/src/extension/layoutsManager.js
++++ b/tiling-assistant@leleat-on-github/src/extension/layoutsManager.js
+@@ -119,13 +119,18 @@ export default class TilingLayoutsManager {
+         if (!layout)
+             return;
+ 
++        const activeWs = global.workspace_manager.get_active_workspace();
++        const monitor = global.display.get_current_monitor();
++
++        // Only consider windows, which are on the monitor we tile on. Otherwise
++        // windows from other monitors (e.g. other instances of an app with an
++        // appId in the layout) would be pulled over to this monitor.
+         const allWs = Settings.getBoolean(Settings.POPUP_ALL_WORKSPACES);
+-        this._remainingWindows = Twm.getWindows(allWs);
++        this._remainingWindows = Twm.getWindows(allWs)
++            .filter(w => w.get_monitor() === monitor);
+         this._items = new Layout(layout).getItems();
+         this._currItem = null;
+ 
+-        const activeWs = global.workspace_manager.get_active_workspace();
+-        const monitor = global.display.get_current_monitor();
+         const workArea = activeWs.get_work_area_for_monitor(monitor);
+         this._rectPreview?.destroy();
+         this._rectPreview = new St.Widget({
+-- 
+2.43.0
+
